@@ -1,0 +1,14 @@
+/target
+/resources/public/css
+/resources/public/js
+/.lein-*
+/.idea
+/.shadow-cljs
+/node_modules
+*.iml
+*#
+.#*
+profiles.clj
+.nrepl-port
+.AppleDouble
+.DS_Store
