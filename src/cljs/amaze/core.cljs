@@ -1,11 +1,9 @@
-(ns amaze.core
-  (:require
-   [reagent.dom :as rdom]
-   [re-frame.core :as re-frame]
-   [monet.canvas :as canvas]
-   [amaze.events :as events]
-   [amaze.views :as views]
-   [amaze.config :as config]))
+(ns amaze.core (:require [reagent.dom :as rdom]
+                         [re-frame.core :as re-frame]
+                         [monet.canvas :as canvas]
+                         [amaze.events :as events]
+                         [amaze.views :as views]
+                         [amaze.config :as config]))
 
 (enable-console-print!)
 
