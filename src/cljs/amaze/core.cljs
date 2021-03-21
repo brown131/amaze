@@ -1,4 +1,4 @@
-(ns amaze.core (:require [clojure.core.logic :as cl :refer [fresh is run-db run-db*]]
+(ns amaze.core (:require [clojure.core.logic :as cl :refer [fresh is run-db]]
                          [clojure.core.logic.pldb :refer [db db-rel db-fact empty-db]]
                          [reagent.core :as reagent]
                          [reagent.dom :as rdom]
@@ -8,8 +8,11 @@
 
 (enable-console-print!)
 
-(def debug?
-  ^boolean goog.DEBUG)
+(def debug? ^boolean goog.DEBUG)
+
+(defn dev-setup []
+  (when debug?
+    (println "dev mode")))
 
 (def monet-canvas (atom nil))
 
@@ -18,15 +21,15 @@
                  :thickness (reagent/atom "10")
                  :breadth (reagent/atom "15")})
 
-(db-rel direction)
-(db-rel maze)
+(def maze-cells (atom empty-db))
+
+(db-rel direction ^:index d p)
+(db-rel maze ^:index p d)
 
 (def directions (db [direction :north [0 -1]]
                     [direction :south [0 1]]
                     [direction :east [1 0]]
                     [direction :west [-1 0]]))
-
-(def maze-cells (atom empty-db))
 
 (defn render-cell "Display a cell at the specified coordinates."
   [x y dir]
@@ -81,40 +84,34 @@
   (let [[to-x to-y] (neighbor-cell from-x from-y to-direction)]
     (and (<= 1 to-x (js/parseInt @(:width maze-state)))
          (<= 1 to-y (js/parseInt @(:height maze-state)))
-         (empty? (cl/run-db 1 @maze-cells [d] (maze to-x to-y d))))))
+         (empty? (cl/run-db 1 @maze-cells [d] (maze [to-x to-y] d))))))
 
-(defn generate-maze [from-x from-y]
+(defn generate-maze [from-x from-y]         
   (let [exits (filterv #(unvisited from-x from-y %) [:north :south :east :west])]
     (when-not (empty? exits)
       (let [to-direction (get exits (rand-int (count exits)))
             [to-x to-y] (neighbor-cell from-x from-y to-direction)
             from-direction (opposite-direction to-direction)]
         (render-cell to-x to-y from-direction)
-        (reset! maze-cells (db-fact @maze-cells maze to-x to-y from-direction))
+        (reset! maze-cells (db-fact @maze-cells maze [to-x to-y] from-direction))
         (generate-maze to-x to-y)
         (generate-maze from-x from-y)))))
 
 (defn render-exit []
   (let [x (js/parseInt @(:width maze-state))
         y (inc (rand-int (js/parseInt @(:height maze-state))))]
-    (reset! maze-cells (db-fact @maze-cells maze x y :east))
+    (reset! maze-cells (db-fact @maze-cells maze [x y] :east))
     (render-cell x y :east)))
-
-(defn render-spinner [display?]
-  (let [spinner (.getElementById js/document "spinner")]
-    (set! (.. spinner -style -display) (if display? "block" "none"))))
     
 (defn render-maze []
-  (render-spinner true)
   (clear-canvas)
   (generate-maze 0 (inc (rand-int (js/parseInt @(:height maze-state)))))
   (render-exit))
 
 (defn print-maze []
-  (let [image-url (.toDataURL (:canvas @monet-canvas))
+  (let [image-url (.toDataURL (:canvas @monet-canvas) "image/jpeg")
         win (.open js/window image-url)]
-    (.write (. win -document) (str "<br><img src=\"" image-url "\"/>"))
-    (.print win)))
+    (.write (. win -document) (str "<br><img src=\"" image-url "\"/>"))))
 
 (defn main-panel []
   [v-box :src (at) :class "container" :children
@@ -130,10 +127,9 @@
       [v-box :size "1" :children
        [[label :label "Wall Thickness"]
         [input-text :width "90px" :model (:thickness maze-state) :on-change #(reset! (:thickness maze-state) %)]]]
-      [v-box :size "1" :children
+      [v-box :size "7" :children
        [[label :label "Hall Breadth"]
-        [input-text :width "90px" :model (:breadth maze-state) :on-change #(reset! (:breadth maze-state) %)]]]
-      [box :size "6" :child [:img {:id "spinner" :src "assets/images/spinner.gif" :height "0" :width "0" :alt "spinner"}]]]]
+        [input-text :width "90px" :model (:breadth maze-state) :on-change #(reset! (:breadth maze-state) %)]]]]]
     [:p]
     [h-box :children
      [[box :child [button :label "Generate" :on-click render-maze :class "btn-primary"]]
@@ -143,10 +139,6 @@
       [box :child [button :label "Clear" :on-click clear-canvas :class "btn-info"]]]]
     [:p]
     [render-canvas]]])
-
-(defn dev-setup []
-  (when debug?
-    (println "dev mode")))
 
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)

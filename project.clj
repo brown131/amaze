@@ -1,4 +1,4 @@
-(defproject amaze "0.1.0-SNAPSHOT"
+(defproject amaze "1.0."
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/clojurescript "1.10.773"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
@@ -9,6 +9,7 @@
                  [reagent "1.0.0"]
                  [re-frame "1.2.0"]
                  [re-com "2.13.2"]
+                 [com.taoensso/tufte "2.2.0"]
                  [rm-hull/monet "0.3.0"]]
 
   :plugins [[lein-shadow "0.3.1"]
@@ -72,4 +73,4 @@
 
 }
 
-  :prep-tasks [])
+:prep-tasks [])
