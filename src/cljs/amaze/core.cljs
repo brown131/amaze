@@ -100,10 +100,21 @@
     (reset! maze-cells (db-fact @maze-cells maze x y :east))
     (render-cell x y :east)))
 
+(defn render-spinner [display?]
+  (let [spinner (.getElementById js/document "spinner")]
+    (set! (.. spinner -style -display) (if display? "block" "none"))))
+    
 (defn render-maze []
+  (render-spinner true)
   (clear-canvas)
   (generate-maze 0 (inc (rand-int (js/parseInt @(:height maze-state)))))
   (render-exit))
+
+(defn print-maze []
+  (let [image-url (.toDataURL (:canvas @monet-canvas))
+        win (.open js/window image-url)]
+    (.write (. win -document) (str "<br><img src=\"" image-url "\"/>"))
+    (.print win)))
 
 (defn main-panel []
   [v-box :src (at) :class "container" :children
@@ -119,12 +130,15 @@
       [v-box :size "1" :children
        [[label :label "Wall Thickness"]
         [input-text :width "90px" :model (:thickness maze-state) :on-change #(reset! (:thickness maze-state) %)]]]
-      [v-box :size "7" :children
+      [v-box :size "1" :children
        [[label :label "Hall Breadth"]
-        [input-text :width "90px" :model (:breadth maze-state) :on-change #(reset! (:breadth maze-state) %)]]]]]
+        [input-text :width "90px" :model (:breadth maze-state) :on-change #(reset! (:breadth maze-state) %)]]]
+      [box :size "6" :child [:img {:id "spinner" :src "assets/images/spinner.gif" :height "0" :width "0" :alt "spinner"}]]]]
     [:p]
     [h-box :children
      [[box :child [button :label "Generate" :on-click render-maze :class "btn-primary"]]
+      [gap :size "20px"]
+      [box :child [button :label "Print" :on-click print-maze :class "btn-info"]]
       [gap :size "20px"]
       [box :child [button :label "Clear" :on-click clear-canvas :class "btn-info"]]]]
     [:p]
