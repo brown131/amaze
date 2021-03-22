@@ -38,6 +38,16 @@
 
 (defn get-maze-state [kw] (js/parseInt @(kw maze-state)))
 
+(defn calc-canvas-size "Calculate the size in pixels of the maze background."
+  []
+  (let [width (get-maze-state :width)
+        height (get-maze-state :height)
+        thickness (get-maze-state :thickness)
+        breadth (get-maze-state :breadth)
+        canvas-width (+ (* width (+ thickness breadth)) thickness)
+        canvas-height (+ (* height (+ thickness breadth)) thickness)]
+    [canvas-width canvas-height]))
+
 (defn render-cell "Display a cell at the specified coordinates."
   [x y dir]
   (let [thickness (get-maze-state :thickness)
@@ -52,16 +62,6 @@
                                       (fn [ctx val] (-> ctx
                                                         (canvas/fill-style :white)
                                                         (canvas/fill-rect val)))))))
-
-(defn calc-canvas-size "Calculate the size in pixels of the maze background."
-  []
-  (let [width (get-maze-state :width)
-        height (get-maze-state :height)
-        thickness (get-maze-state :thickness)
-        breadth (get-maze-state :breadth)
-        canvas-width (+ (* width (+ thickness breadth)) thickness)
-        canvas-height (+ (* height (+ thickness breadth)) thickness)]
-    [canvas-width canvas-height]))
 
 (defn render-canvas []
   (let [[canvas-width canvas-height] (calc-canvas-size)]
@@ -105,18 +105,28 @@
         (render-cell to-x to-y from-direction)
         (swap! maze-cells #(db-fact % maze [to-x to-y] from-direction))
         (generate-maze to-x to-y)
-        (generate-maze from-x from-y)))))
+        (recur from-x from-y)))))
 
 (defn render-exit []
-  (let [x (get-maze-state :width)
-        y (inc (rand-int (get-maze-state :height)))]
+  (let [x (inc (get-maze-state :width))
+        y (inc (rand-int (get-maze-state :height)))
+        thickness (get-maze-state :thickness)
+        breadth (get-maze-state :breadth)
+        px (* (dec x) (+ breadth thickness))
+        py (+ (* (dec y) (+ breadth thickness)) thickness)]
     (swap! maze-cells #(db-fact % maze [x y] :east))
-    (render-cell x y :east)))
+    (canvas/add-entity @monet-canvas [px py]
+                       (canvas/entity {:x px :y py :w thickness :h breadth} nil
+                                      (fn [ctx val] (-> ctx
+                                                        (canvas/fill-style :white)
+                                                        (canvas/fill-rect val)))))))
+    ;;(render-cell x y :east)))
     
 (defn render-maze []
   (clear-canvas)
   (generate-maze 0 (inc (rand-int (get-maze-state :height))))
-  (render-exit))
+  (render-exit)
+  (println (sort (cl/run-db* @maze-cells [x y d] (maze [x y] d)))))
 
 (defn print-maze []
   (let [image-url (.toDataURL (:canvas @monet-canvas) "image/jpeg")
