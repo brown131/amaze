@@ -47,6 +47,45 @@
         canvas-width (+ (* width (+ thickness breadth)) thickness)
         canvas-height (+ (* height (+ thickness breadth)) thickness)]
     [canvas-width canvas-height]))
+(defn opposite-direction [dir]
+  (first (cl/run-db 1 directions [opposite-dir]
+                    (fresh [x y dx dy]
+                           (direction dir [x y])
+                           (is dx x #(* % -1))
+                           (is dy y #(* % -1))
+                           (direction opposite-dir [dx dy])))))
+
+(defn neighbor-cell "Find the coordinates of a neighboring cell."
+  [from-x from-y to-direction]
+  (first (cl/run-db 1 directions [to-x to-y]
+                    (fresh [x y]
+                           (direction to-direction [x y])
+                           (is to-x x #(+ % from-x))
+                           (is to-y y #(+ % from-y))))))
+
+(defn unvisited "Check if a cell is not yet part of the maze."
+  [from-x from-y to-direction]
+  (let [[to-x to-y] (neighbor-cell from-x from-y to-direction)]
+    (and (<= 1 to-x (get-maze-state :width))
+         (<= 1 to-y (get-maze-state :height))
+         (empty? (cl/run-db 1 @maze-cells [d] (maze [to-x to-y] d))))))
+
+(declare generate-maze)
+
+(defn generate-path [to-x to-y to-direction]
+  (let [from-direction (opposite-direction to-direction)]
+    (swap! maze-cells #(db-fact % maze [to-x to-y] from-direction))
+    (generate-maze to-x to-y)))
+
+(defn generate-maze [from-x from-y]         
+  (let [exits (filterv #(unvisited from-x from-y %) [:north :south :east :west])]
+    (when-not (empty? exits)
+      (let [to-direction (get exits (rand-int (count exits)))
+            [to-x to-y] (neighbor-cell from-x from-y to-direction)
+            from-direction (opposite-direction to-direction)]
+        (swap! maze-cells #(db-fact % maze [to-x to-y] from-direction))
+        (generate-maze to-x to-y)
+        (recur from-x from-y)))))
 
 (defn render-cell "Display a cell at the specified coordinates."
   [x y dir]
@@ -73,40 +112,6 @@
   (canvas/clear! @monet-canvas)
   (reset! maze-cells empty-db))
 
-(defn opposite-direction [dir]
-  (first (cl/run-db 1 directions [opposite-dir]
-                    (fresh [x y dx dy]
-                           (direction dir [x y])
-                           (is dx x #(* % -1))
-                           (is dy y #(* % -1))
-                           (direction opposite-dir [dx dy])))))
-
-(defn neighbor-cell "Find the coordinates of a neighboring cell."
-  [from-x from-y to-direction]
-  (first (cl/run-db 1 directions [to-x to-y]
-                    (fresh [x y]
-                           (direction to-direction [x y])
-                           (is to-x x #(+ % from-x))
-                           (is to-y y #(+ % from-y))))))
-
-(defn unvisited "Check if a cell is not yet part of the maze."
-  [from-x from-y to-direction]
-  (let [[to-x to-y] (neighbor-cell from-x from-y to-direction)]
-    (and (<= 1 to-x (get-maze-state :width))
-         (<= 1 to-y (get-maze-state :height))
-         (empty? (cl/run-db 1 @maze-cells [d] (maze [to-x to-y] d))))))
-
-(defn generate-maze [from-x from-y]         
-  (let [exits (filterv #(unvisited from-x from-y %) [:north :south :east :west])]
-    (when-not (empty? exits)
-      (let [to-direction (get exits (rand-int (count exits)))
-            [to-x to-y] (neighbor-cell from-x from-y to-direction)
-            from-direction (opposite-direction to-direction)]
-        (render-cell to-x to-y from-direction)
-        (swap! maze-cells #(db-fact % maze [to-x to-y] from-direction))
-        (generate-maze to-x to-y)
-        (recur from-x from-y)))))
-
 (defn render-exit []
   (let [x (inc (get-maze-state :width))
         y (inc (rand-int (get-maze-state :height)))
@@ -120,13 +125,12 @@
                                       (fn [ctx val] (-> ctx
                                                         (canvas/fill-style :white)
                                                         (canvas/fill-rect val)))))))
-    ;;(render-cell x y :east)))
     
 (defn render-maze []
   (clear-canvas)
   (generate-maze 0 (inc (rand-int (get-maze-state :height))))
-  (render-exit)
-  (println (sort (cl/run-db* @maze-cells [x y d] (maze [x y] d)))))
+  (run! (fn [[x y d]] (render-cell x y d)) (cl/run-db* @maze-cells [x y d] (maze [x y] d)))
+  (render-exit))
 
 (defn print-maze []
   (let [image-url (.toDataURL (:canvas @monet-canvas) "image/jpeg")
