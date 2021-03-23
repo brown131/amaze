@@ -47,6 +47,7 @@
         canvas-width (+ (* width (+ thickness breadth)) thickness)
         canvas-height (+ (* height (+ thickness breadth)) thickness)]
     [canvas-width canvas-height]))
+
 (defn opposite-direction [dir]
   (first (cl/run-db 1 directions [opposite-dir]
                     (fresh [x y dx dy]
@@ -66,8 +67,8 @@
 (defn unvisited "Check if a cell is not yet part of the maze."
   [from-x from-y to-direction]
   (let [[to-x to-y] (neighbor-cell from-x from-y to-direction)]
-    (and (<= 1 to-x (get-maze-state :width))
-         (<= 1 to-y (get-maze-state :height))
+    (and (< -1 to-x (get-maze-state :width))
+         (< -1 to-y (get-maze-state :height))
          (empty? (cl/run-db 1 @maze-cells [d] (maze [to-x to-y] d))))))
 
 (declare generate-maze)
@@ -92,8 +93,8 @@
   (let [thickness (get-maze-state :thickness)
         breadth (get-maze-state :breadth)
         [dx dy] (first (run-db 1 directions [p] (direction dir p)))
-        px (- (+ (* x (+ breadth thickness)) (* (Math/min dx 0) thickness)) breadth)
-        py (- (+ (* y (+ breadth thickness)) (* (Math/min dy 0) thickness)) breadth)
+        px (+ (* x breadth) (* thickness (+ x 1 (Math/min dx 0))))
+        py (+ (* y breadth) (* thickness (+ y 1 (Math/min dy 0))))
         cw (+ breadth (* thickness (Math/abs dx)))
         ch (+ breadth (* thickness (Math/abs dy)))]
     (canvas/add-entity @monet-canvas [px py]
@@ -113,12 +114,12 @@
   (reset! maze-cells empty-db))
 
 (defn render-exit []
-  (let [x (inc (get-maze-state :width))
-        y (inc (rand-int (get-maze-state :height)))
+  (let [x (get-maze-state :width)
+        y (rand-int (get-maze-state :height))
         thickness (get-maze-state :thickness)
         breadth (get-maze-state :breadth)
-        px (* (dec x) (+ breadth thickness))
-        py (+ (* (dec y) (+ breadth thickness)) thickness)]
+        px (* x (+ breadth thickness))
+        py (+ (* y (+ breadth thickness)) thickness)]
     (swap! maze-cells #(db-fact % maze [x y] :east))
     (canvas/add-entity @monet-canvas [px py]
                        (canvas/entity {:x px :y py :w thickness :h breadth} nil
@@ -128,7 +129,7 @@
     
 (defn render-maze []
   (clear-canvas)
-  (generate-maze 0 (inc (rand-int (get-maze-state :height))))
+  (generate-maze -1 (rand-int (get-maze-state :height)))
   (run! (fn [[x y d]] (render-cell x y d)) (cl/run-db* @maze-cells [x y d] (maze [x y] d)))
   (render-exit))
 
