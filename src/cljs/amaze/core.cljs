@@ -73,11 +73,6 @@
 
 (declare generate-maze)
 
-(defn generate-path [to-x to-y to-direction]
-  (let [from-direction (opposite-direction to-direction)]
-    (swap! maze-cells #(db-fact % maze [to-x to-y] from-direction))
-    (generate-maze to-x to-y)))
-
 (defn generate-maze [from-x from-y]         
   (let [exits (filterv #(unvisited from-x from-y %) [:north :south :east :west])]
     (when-not (empty? exits)
