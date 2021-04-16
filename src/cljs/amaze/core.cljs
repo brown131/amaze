@@ -1,6 +1,4 @@
-(ns amaze.core (:require [clojure.core.logic :as cl :refer [fresh is run-db]]
-                         [clojure.core.logic.pldb :refer [db db-rel db-fact empty-db]]
-                         [reagent.core :as reagent]
+(ns amaze.core (:require [reagent.core :as reagent]
                          [reagent.dom :as rdom]
                          [re-com.core :refer [at box button gap h-box input-text label title v-box]]
                          [monet.canvas :as canvas]
@@ -24,17 +22,13 @@
                  :breadth (reagent/atom "15")})
 
 ;; Facts database holding the generated maze cells.
-(def maze-cells (atom empty-db))
+(def maze-cells (atom {}))
 
-;; Define and set the arity of the db relations:
-(db-rel direction ^:index d p)
-(db-rel maze ^:index p d)
+;; Unsvisited cells list.
+(def unvisited-maze-cells (atom #{}))
 
-;; Maze directions with coordinate deltas.
-(def directions (db [direction :north [0 -1]]
-                    [direction :south [0 1]]
-                    [direction :east [1 0]]
-                    [direction :west [-1 0]]))
+;; Maze directions with coordinate deltas.  Origin is upper left.
+(def directions {:north [0 -1] :south [0 1] :east [1 0] :west [-1 0]})
 
 (defn get-maze-state [kw] (js/parseInt @(kw maze-state)))
 
@@ -49,45 +43,86 @@
     [canvas-width canvas-height]))
 
 (defn opposite-direction [dir]
-  (first (cl/run-db 1 directions [opposite-dir]
-                    (fresh [x y dx dy]
-                           (direction dir [x y])
-                           (is dx x #(* % -1))
-                           (is dy y #(* % -1))
-                           (direction opposite-dir [dx dy])))))
+  (ffirst (filter (fn [[_ [x y]]] (= [(* -1 x) (* -1 y)] (dir directions))) directions)))
 
 (defn neighbor-cell "Find the coordinates of a neighboring cell."
-  [from-x from-y to-direction]
-  (first (cl/run-db 1 directions [to-x to-y]
-                    (fresh [x y]
-                           (direction to-direction [x y])
-                           (is to-x x #(+ % from-x))
-                           (is to-y y #(+ % from-y))))))
+  [[from-x from-y] to-direction]
+  (let [[dx dy] (to-direction directions)]
+    [(+ from-x dx) (+ from-y dy)]))
 
-(defn unvisited "Check if a cell is not yet part of the maze."
-  [from-x from-y to-direction]
-  (let [[to-x to-y] (neighbor-cell from-x from-y to-direction)]
+(defn unvisited? "Check if a cell is not yet part of the maze."
+  [from-cell to-direction]
+  (let [[to-x to-y] (neighbor-cell from-cell to-direction)]
     (and (< -1 to-x (get-maze-state :width))
          (< -1 to-y (get-maze-state :height))
-         (empty? (cl/run-db 1 @maze-cells [d] (maze [to-x to-y] d))))))
+         (not (get @maze-cells [to-x to-y])))))
 
-(declare generate-maze)
+(defn in-range? "Check if a cell is in the maze."
+  [from-cell to-direction]
+  (let [[to-x to-y] (neighbor-cell from-cell to-direction)]
+    (and (< -1 to-x (get-maze-state :width))
+         (< -1 to-y (get-maze-state :height)))))
 
-(defn generate-maze [from-x from-y]         
-  (let [exits (filterv #(unvisited from-x from-y %) [:north :south :east :west])]
+(defn generate-dfs-maze "Generate a maze using the Depth-First Search algorith."
+  [from-cell]
+  (let [exits (filterv #(unvisited? from-cell %) [:north :south :east :west])]
     (when-not (empty? exits)
-      (let [to-direction (get exits (rand-int (count exits)))
-            [to-x to-y] (neighbor-cell from-x from-y to-direction)
+      (let [to-direction (rand-nth exits)
+            to-cell (neighbor-cell from-cell to-direction)
             from-direction (opposite-direction to-direction)]
-        (swap! maze-cells #(db-fact % maze [to-x to-y] from-direction))
-        (generate-maze to-x to-y)
-        (recur from-x from-y)))))
+        (swap! maze-cells assoc to-cell from-direction)
+        (swap! unvisited-maze-cells disj to-cell)
+        (generate-dfs-maze to-cell)
+        (recur from-cell)))))
 
-(defn render-cell "Display a cell at the specified coordinates."
+(defn generate-aldous-broder-maze "Generate a maze using the Aldous-Broder algorithm."
+  [from-cell]
+  (let [to-direction (rand-nth (filter #(in-range? from-cell %) [:north :south :east :west]))
+        to-cell (neighbor-cell from-cell to-direction)
+        from-direction (opposite-direction to-direction)]
+    (when-not (get @maze-cells to-cell)
+      (swap! maze-cells assoc to-cell from-direction)
+      (swap! unvisited-maze-cells disj to-cell))
+    (when-not (empty? @unvisited-maze-cells)
+      (recur to-cell))))
+
+(defn walk-maze [from-cell visited-cells]
+  (let [to-direction (get visited-cells from-cell)
+        to-cell (neighbor-cell from-cell to-direction)]
+    (when (get visited-cells to-cell)
+      (swap! maze-cells assoc from-cell to-direction)
+      (swap! unvisited-maze-cells disj from-cell)
+      (recur to-cell (dissoc visited-cells from-cell)))))
+
+(defn generate-wilson-maze "Generate a maze using the Wilson algorithm."
+  [from-cell start-cell visited-cells]
+  (let [to-direction (rand-nth (filter #(in-range? from-cell %) [:north :south :east :west]))
+        to-cell (neighbor-cell from-cell to-direction)]
+    (if (get @unvisited-maze-cells from-cell)
+      (recur to-cell start-cell (assoc visited-cells from-cell to-direction))
+      (do
+        (walk-maze start-cell (assoc visited-cells from-cell to-direction))
+        (when-not (empty? @unvisited-maze-cells)
+          (let [new-start-cell (rand-nth (into [] @unvisited-maze-cells))]
+            (recur new-start-cell new-start-cell {})))))))
+
+(defn generate-maze []
+  (let [start-cell (rand-nth (into [] @unvisited-maze-cells))
+        stop-cell [0 (rand-int (get-maze-state :height))]]
+    (swap! unvisited-maze-cells disj stop-cell)
+    (generate-wilson-maze start-cell start-cell {})
+    (swap! maze-cells assoc stop-cell :west))
+
+  #_(generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))])
+
+  #_(generate-dfs-maze [-1 (rand-int (get-maze-state :height))]))
+
+(defn render-cell "Display a cell at the specified coordinates.  
+                   An opening is rendered in the specified direction."
   [x y dir]
   (let [thickness (get-maze-state :thickness)
         breadth (get-maze-state :breadth)
-        [dx dy] (first (run-db 1 directions [p] (direction dir p)))
+        [dx dy] (dir directions)
         px (+ (* x breadth) (* thickness (+ x 1 (Math/min dx 0))))
         py (+ (* y breadth) (* thickness (+ y 1 (Math/min dy 0))))
         cw (+ breadth (* thickness (Math/abs dx)))
@@ -106,7 +141,19 @@
 
 (defn clear-canvas []
   (canvas/clear! @monet-canvas)
-  (reset! maze-cells empty-db))
+  (reset! maze-cells {})
+  (reset! unvisited-maze-cells (into #{} (for [width (range (get-maze-state :width))
+                                               height (range (get-maze-state :height))]
+                                           [width height]))))
+
+(defn render-wall [x y side]
+  (let [[dx dy] (directions side)
+        thickness (get-maze-state :thickness)
+        breadth (get-maze-state :breadth)
+        width (if (zero? dx) breadth thickness)
+        height (if (zero? dy) breadth thickness)
+        px (+ (* x (+ breadth thickness)) (* dy width))
+        py (+ (* y (+ breadth thickness)) (* dx height))]))
 
 (defn render-exit []
   (let [x (get-maze-state :width)
@@ -115,17 +162,18 @@
         breadth (get-maze-state :breadth)
         px (* x (+ breadth thickness))
         py (+ (* y (+ breadth thickness)) thickness)]
-    (swap! maze-cells #(db-fact % maze [x y] :east))
+    (swap! maze-cells assoc [x y] :east)
+    (swap! unvisited-maze-cells disj [x y])
     (canvas/add-entity @monet-canvas [px py]
                        (canvas/entity {:x px :y py :w thickness :h breadth} nil
                                       (fn [ctx val] (-> ctx
                                                         (canvas/fill-style :white)
                                                         (canvas/fill-rect val)))))))
-    
+
 (defn render-maze []
   (clear-canvas)
-  (generate-maze -1 (rand-int (get-maze-state :height)))
-  (run! (fn [[x y d]] (render-cell x y d)) (cl/run-db* @maze-cells [x y d] (maze [x y] d)))
+  (generate-maze)
+  (run! (fn [[[x y] d]] (render-cell x y d)) @maze-cells)
   (render-exit))
 
 (defn print-maze []
