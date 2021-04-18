@@ -8,4 +8,8 @@ This particular implementation was done as a study in using [ClojureScript](http
 
 The height, width, thickness of the walls, and the breadth of the hallways in pixels can be set before pressing the "Generate" button. The maze can be displayed stand-alone on a separate page for printing by pressing the "Print" button. The "Clear" button clears the maze canvas.
 
+## Development
+
+Run ```lein watch``` to start the shadow-clj server.
+
 ![https://clojurescript.org/index](https://clojurescript.org/images/cljs-logo-60b.png)

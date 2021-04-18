@@ -21,7 +21,6 @@
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-
   :shadow-cljs {:nrepl {:port 8777}
 
                 :builds {:app {:target :browser
