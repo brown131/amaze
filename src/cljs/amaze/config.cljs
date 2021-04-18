@@ -9,7 +9,8 @@
   [{:id 1 :label "Depth-First Search"}
    {:id 2 :label "Aldous-Broder"}
    {:id 3 :label "Wilson"}
-   {:id 4 :label "Aldous-Broder/Wilson Hybrid"}])
+   {:id 4 :label "Aldous-Broder/Wilson Hybrid"}
+   {:id 5 :label "AB/DFS/W Hybrid"}])
 
 (def maze-state "State of the maze UI controls."
   {:width (reagent/atom "20")

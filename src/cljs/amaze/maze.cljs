@@ -28,8 +28,7 @@
     (if-let [to-cell (neighbor-cell from-cell to-direction)]
       (do
         (swap! maze-cells assoc to-cell (opposite-direction to-direction))
-        (swap! unvisited-maze-cells disj to-cell)
-        (when (< threshold (/ (count @unvisited-maze-cells) (* (get-maze-state :width) (get-maze-state :height))))
+        (when (< (/ (count @maze-cells) (* (get-maze-state :width) (get-maze-state :height))) threshold)
           (recur (cons to-cell from-cells) threshold)))
     (when-not (empty? rest-from-cells)
       (recur rest-from-cells threshold)))))
@@ -42,14 +41,15 @@
     (when-not (get @maze-cells to-cell)
       (swap! maze-cells assoc to-cell from-direction)
       (swap! unvisited-maze-cells disj to-cell))
-    (when (< threshold (/ (count @unvisited-maze-cells) (* (get-maze-state :width) (get-maze-state :height))))
+    (when (< (/ (count @maze-cells) (* (get-maze-state :width) (get-maze-state :height))) threshold)
       (recur to-cell threshold))))
 
 (defn walk-maze [from-cell visited-cells]
   (let [to-direction (get visited-cells from-cell)
         to-cell (neighbor-cell from-cell to-direction)]
     (when (get visited-cells to-cell)
-      (swap! maze-cells assoc from-cell to-direction)
+      (when-not (and (= (first from-cell) 0) (= (get @maze-cells from-cell) :west))
+        (swap! maze-cells assoc from-cell to-direction))
       (swap! unvisited-maze-cells disj from-cell)
       (recur to-cell (dissoc visited-cells from-cell)))))
 
@@ -66,12 +66,13 @@
 
 (defn generate-wilson-maze "Generate a maze using the Wilson algorithm."
   [stop-cell threshold]
-  (let [start-cell (rand-nth (into [] @unvisited-maze-cells))
-        to-direction (first (filter #(in-range? stop-cell %) (shuffle [:north :south :east :west])))]
-    (swap! maze-cells assoc stop-cell to-direction)
-    (swap! unvisited-maze-cells disj stop-cell)
+  (let [start-cell (rand-nth (into [] @unvisited-maze-cells))]
+    (when (empty? @maze-cells)
+      (let [to-direction (first (filter #(in-range? stop-cell %) (shuffle [:north :south :east :west])))]
+        (swap! maze-cells assoc stop-cell to-direction)
+        (swap! unvisited-maze-cells disj stop-cell)))
     (visit-maze-cells start-cell start-cell {})
-    (when (= threshold 0.0)
+    (when (zero? (first stop-cell))
       (swap! maze-cells assoc stop-cell :west))))
 
 (defn init-maze []
@@ -83,9 +84,13 @@
 (defn generate-maze []
   (init-maze)
   (time (case (get-maze-state :algorithm)
-          1 (generate-dfs-maze [[-1 (rand-int (get-maze-state :height))]] 0)
-          2 (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0)
-          3 (generate-wilson-maze [0 (rand-int (get-maze-state :height))] 0)
+          1 (generate-dfs-maze [[-1 (rand-int (get-maze-state :height))]] 1)
+          2 (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 1)
+          3 (generate-wilson-maze [0 (rand-int (get-maze-state :height))] 1)
           4 (do
-              (generate-aldous-broder-maze [(rand-int (get-maze-state :width))(rand-int (get-maze-state :height))] 0.70)
-              (generate-wilson-maze [(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))] 0.30)))))
+              (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.30)
+              (generate-wilson-maze [(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))] 0.70))
+          5 (do
+              (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.33)
+              (generate-dfs-maze [[(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))]] 0.66)
+              (generate-wilson-maze [(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))] 1)))))
