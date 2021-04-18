@@ -1,8 +1,8 @@
 (ns amaze.core (:require [reagent.dom :as rdom]
-                         [re-com.core :refer [at box button gap h-box input-text label title v-box]]
+                         [re-com.core :refer [at box button gap h-box input-text label single-dropdown title v-box]]
                          [monet.canvas :as canvas]
                          [re-frame.core :as re-frame]
-                         [amaze.config :refer [debug? directions maze-state get-maze-state]]
+                         [amaze.config :refer [debug? directions maze-algorithms maze-state get-maze-state]]
                          [amaze.maze :refer [maze-cells generate-maze]]))
 
 (enable-console-print!)
@@ -90,10 +90,14 @@
        [[label :label "Wall Thickness"]
         [input-text :width "90px" :model (:thickness maze-state)
          :on-change #(reset! (:thickness maze-state) %)]]]
-      [v-box :size "7" :children
+      [v-box :size "1" :children
        [[label :label "Hall Breadth"]
         [input-text :width "90px" :model (:breadth maze-state)
-         :on-change #(reset! (:breadth maze-state) %)]]]]]
+         :on-change #(reset! (:breadth maze-state) %)]]]
+      [v-box :size "5" :children
+       [[label :label "Algorithm"]
+        [single-dropdown :choices maze-algorithms :model (:algorithm maze-state)
+         :width "250px" :max-height "300px" :on-change  #(reset! (:algorithm maze-state) %)]]]]]
     [:p]
     [h-box :children
      [[box :child [button :label "Generate" :on-click render-maze :class "btn-primary"]]

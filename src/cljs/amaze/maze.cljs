@@ -1,11 +1,4 @@
-(ns amaze.maze (:require [amaze.config :refer [directions get-maze-state]]))
-
-; Maze algorithms: 
-;; :dfs = Depth-First Search algorithm - fastest, but creates tunnels with no exits.
-;; :aldous-broder = Aldous-Broder algorithm - quick at first, slow at end
-;; :wilson = Wilson algorithm - slow at first, quick at end
-;; :hybrid = Aldous-Broder/Wilson Hybrid algorith - Use Aldous-Broder until the Wilson alogorithm becomes faster.
-(def maze-algorithm :hybrid)
+(ns amaze.maze (:require [amaze.config :refer [directions get-maze-state maze-algorithms]]))
 
 (def maze-cells "Map holding the generated maze cells with direction of opening." (atom {}))
 
@@ -52,7 +45,7 @@
     (when-not (get @maze-cells to-cell)
       (swap! maze-cells assoc to-cell from-direction)
       (swap! unvisited-maze-cells disj to-cell))
-    (when (>= threshold (/ (count @unvisited-maze-cells) (* (get-maze-state :width) (get-maze-state :height))) )
+    (when (< threshold (/ (count @unvisited-maze-cells) (* (get-maze-state :width) (get-maze-state :height))))
       (recur to-cell threshold))))
 
 (defn walk-maze [from-cell visited-cells]
@@ -92,10 +85,11 @@
 
 (defn generate-maze []
   (init-maze)
-  (time (case maze-algorithm
-    :dfs (generate-dfs-maze [-1 (rand-int (get-maze-state :height))])
-    :aldous-broder (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0)
-    :wilson (generate-wilson-maze [0 (rand-int (get-maze-state :height))] 0)
-    :hybrid (do
+  (println (get-maze-state :algorithm))
+  (time (case (get-maze-state :algorithm)
+          1 (generate-dfs-maze [-1 (rand-int (get-maze-state :height))])
+          2 (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0)
+          3 (generate-wilson-maze [0 (rand-int (get-maze-state :height))] 0)
+          4 (do
               (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.70)
               (generate-wilson-maze [(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))] 0.30)))))
