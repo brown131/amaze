@@ -17,6 +17,7 @@
    :height (reagent/atom "20")
    :thickness (reagent/atom "10")
    :breadth (reagent/atom "15")
-   :algorithm (reagent/atom 4)})
+   :algorithm (reagent/atom 4)
+   :size (reagent/atom 400)})
 
 (defn get-maze-state [kw] (js/parseInt @(kw maze-state)))

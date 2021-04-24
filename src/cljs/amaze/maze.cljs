@@ -1,4 +1,4 @@
-(ns amaze.maze (:require [amaze.config :refer [directions get-maze-state maze-algorithms]]))
+(ns amaze.maze (:require [amaze.config :refer [directions get-maze-state maze-state]]))
 
 (def maze-cells "Map holding the generated maze cells with direction of opening." (atom {}))
 
@@ -28,7 +28,7 @@
     (if-let [to-cell (neighbor-cell from-cell to-direction)]
       (do
         (swap! maze-cells assoc to-cell (opposite-direction to-direction))
-        (when (< (/ (count @maze-cells) (* (get-maze-state :width) (get-maze-state :height))) threshold)
+        (when (< (/ (count @maze-cells) (get-maze-state :size)) threshold)
           (recur (cons to-cell from-cells) threshold)))
     (when-not (empty? rest-from-cells)
       (recur rest-from-cells threshold)))))
@@ -41,7 +41,7 @@
     (when-not (get @maze-cells to-cell)
       (swap! maze-cells assoc to-cell from-direction)
       (swap! unvisited-maze-cells disj to-cell))
-    (when (< (/ (count @maze-cells) (* (get-maze-state :width) (get-maze-state :height))) threshold)
+    (when (< (/ (count @maze-cells) (get-maze-state :size)) threshold)
       (recur to-cell threshold))))
 
 (defn walk-maze [from-cell visited-cells]
@@ -76,6 +76,7 @@
       (swap! maze-cells assoc stop-cell :west))))
 
 (defn init-maze []
+  (reset! (:size maze-state) (* (get-maze-state :width) (get-maze-state :height)))
   (reset! maze-cells {})
   (reset! unvisited-maze-cells (into #{} (for [width (range (get-maze-state :width))
                                                height (range (get-maze-state :height))]
@@ -89,8 +90,8 @@
           3 (generate-wilson-maze [0 (rand-int (get-maze-state :height))] 1)
           4 (do
               (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.30)
-              (generate-wilson-maze [(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))] 0.70))
+              (generate-wilson-maze [(dec (get-maze-state :width)) (rand-int (get-maze-state :height))] 0.70))
           5 (do
-              (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.33)
-              (generate-dfs-maze [[(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))]] 0.66)
-              (generate-wilson-maze [(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))] 1)))))
+              (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.10)
+              (generate-dfs-maze [[(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))]] 0.80)
+              (generate-wilson-maze [(dec (get-maze-state :width)) (rand-int (get-maze-state :height))] 1)))))
