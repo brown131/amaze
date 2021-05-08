@@ -3,7 +3,7 @@
                          [monet.canvas :as canvas]
                          [re-frame.core :as re-frame]
                          [amaze.config :refer [debug? directions maze-algorithms maze-state get-maze-state]]
-                         [amaze.maze :refer [maze-cells generate-maze]]))
+                         [amaze.maze :refer [maze-cells init-maze generate-maze]]))
 
 (enable-console-print!)
 
@@ -63,6 +63,7 @@
 
 (defn render-maze []
   (clear-canvas)
+  (init-maze)
   (generate-maze)
   (run! (fn [[[x y] d]] (render-cell x y d)) @maze-cells)
   (render-exit))

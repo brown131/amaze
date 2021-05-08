@@ -1,4 +1,4 @@
-(defproject amaze "1.0."
+(defproject amaze "1.0.1"
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/clojurescript "1.10.773"
                   :exclusions [com.google.javascript/closure-compiler-unshaded

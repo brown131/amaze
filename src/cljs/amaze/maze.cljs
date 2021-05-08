@@ -82,16 +82,14 @@
                                                height (range (get-maze-state :height))]
                                            [width height]))))
 
-(defn generate-maze []
-  (init-maze)
-  (time (case (get-maze-state :algorithm)
-          1 (generate-dfs-maze [[-1 (rand-int (get-maze-state :height))]] 1)
-          2 (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 1)
-          3 (generate-wilson-maze [0 (rand-int (get-maze-state :height))] 1)
-          4 (do
-              (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.30)
-              (generate-wilson-maze [(dec (get-maze-state :width)) (rand-int (get-maze-state :height))] 0.70))
-          5 (do
-              (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.10)
-              (generate-dfs-maze [[(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))]] 0.80)
-              (generate-wilson-maze [(dec (get-maze-state :width)) (rand-int (get-maze-state :height))] 1)))))
+(defmulti generate-maze (fn [] @(:algorithm maze-state)) :default 4)
+(defmethod generate-maze 1 [] (generate-dfs-maze [[-1 (rand-int (get-maze-state :height))]] 1))
+(defmethod generate-maze 2 [] (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 1))
+(defmethod generate-maze 3 [] (generate-wilson-maze [0 (rand-int (get-maze-state :height))] 1))
+(defmethod generate-maze 4 [] (do
+                                (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.30)
+                                (generate-wilson-maze [(dec (get-maze-state :width)) (rand-int (get-maze-state :height))] 0.70)))
+(defmethod generate-maze 5 [] (do
+                                (generate-aldous-broder-maze [-1 (rand-int (get-maze-state :height))] 0.10)
+                                (generate-dfs-maze [[(rand-int (get-maze-state :width)) (rand-int (get-maze-state :height))]] 0.80)
+                                (generate-wilson-maze [(dec (get-maze-state :width)) (rand-int (get-maze-state :height))] 1)))
