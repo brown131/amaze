@@ -9,6 +9,7 @@
                  [reagent "1.0.0"]
                  [re-frame "1.2.0"]
                  [re-com "2.13.2"]
+                 [re-pressed "0.3.1"]
                  [com.taoensso/tufte "2.2.0"]
                  [rm-hull/monet "0.3.0"]]
 

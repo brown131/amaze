@@ -1,14 +1,20 @@
-/target
-/resources/public/css
-/resources/public/js
-/.lein-*
-/.idea
-/.shadow-cljs
-/node_modules
+/target/
+/resources/public/css/
+/resources/public/js/
+/*.log
 *.iml
 *#
 .#*
 profiles.clj
-.nrepl-port
 .AppleDouble
 .DS_Store
+
+# Leiningen
+/.lein-*
+/.nrepl-port
+
+# Node.js dependencies
+/node_modules/
+
+# shadow-cljs cache, port files
+/.shadow-cljs/
