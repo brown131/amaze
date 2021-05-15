@@ -18,6 +18,8 @@
    :thickness (reagent/atom "10")
    :breadth (reagent/atom "15")
    :algorithm (reagent/atom 4)
+   :entrance (reagent/atom [0 0])
+   :exit (reagent/atom [19 19])
    :size (reagent/atom 400)
    :ball-position (reagent/atom [0 0])})
 

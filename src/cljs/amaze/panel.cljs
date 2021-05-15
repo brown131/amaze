@@ -2,7 +2,8 @@
   (:require [re-com.core :refer [at box button gap h-box input-text label single-dropdown title v-box]]
             [amaze.canvas :refer [calc-canvas-size clear-canvas draw-rect draw-circle print-maze]]
             [amaze.config :refer [directions maze-algorithms db get-db-value]]
-            [amaze.maze :refer [maze-cells init-maze generate-maze]]))
+            [amaze.maze :refer [maze-cells init-maze generate-maze]]
+            [amaze.play :refer [play-maze]]))
 
 (enable-console-print!)
 
@@ -23,18 +24,6 @@
         cw (+ breadth (* thickness (Math/abs dx)))
         ch (+ breadth (* thickness (Math/abs dy)))]
     (draw-rect px py cw ch :white)))
-
-(defn render-ball
-  [color]
-  (let [[x y] @(:ball-position db)
-        thickness (get-db-value :thickness)
-        breadth (get-db-value :breadth)
-        px (+ (* x (+ breadth thickness)) thickness 1)
-        py (+ (* y (+ breadth thickness)) thickness 1)
-        r (dec (/ breadth 2))]
-    (draw-circle px py r color)))
-
-(defn play-maze [] (render-ball :red))
 
 (defn render-exit []
   (let [x (get-db-value :width)

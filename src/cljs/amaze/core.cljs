@@ -3,8 +3,8 @@
                          [re-pressed.core :as rp]
                          [amaze.canvas :refer [reset-canvas]]
                          [amaze.config :refer [debug?]]
-                         [amaze.events :as events]
-                         [amaze.panel :refer [main-panel]]))
+                         [amaze.panel :refer [main-panel render-maze]]
+                         [amaze.play :as play]))
 
 (enable-console-print!)
 
@@ -17,11 +17,12 @@
   (let [root-el (.getElementById js/document "app")]
     (rdom/unmount-component-at-node root-el)
     (rdom/render [main-panel] root-el)
-    (events/dispatch-keydown-rules)
-    (reset-canvas)))
+    (play/dispatch-keydown-rules)
+    (reset-canvas)
+    (render-maze)))
 
 (defn init []
-  (re-frame/dispatch-sync [::events/initialize-db])
+  (re-frame/dispatch-sync [::play/initialize-db])
   (re-frame/dispatch-sync [::rp/add-keyboard-event-listener "keydown"])
   (dev-setup)
   (mount-root))

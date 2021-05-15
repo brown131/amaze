@@ -13,12 +13,20 @@ For the second branch "algorithms" I implemented a few different maze generaton 
 
 ## How to use
 
-The height, width, thickness of the walls, and the breadth of the hallways in pixels can be set before pressing the "Generate" button. The algotithm to use when generating the mase can also be selected. The maze can be displayed stand-alone on a separate page for printing by pressing the "Print" button. The "Clear" button clears the maze canvas.
+The height, width, thickness of the walls, and the breadth of the hallways in pixels can be set before pressing the "Generate" button. The algorithm to use when generating the mase can also be selected. 
+
+The maze can be displayed on a separate page for printing by pressing the "Print" button. 
+
+The "Play" button displays a red ball at the entrance to the maze. The ball can then be moved through the maze using:
+* The "W" or "I" key to move the ball up;
+* The "A" or "J" key to move the ball left;
+* The "S" or "K" key to move the ball down;
+* The "D" or "L" key to move the ball right.
 
 ## Development
 
-Run ```lein watch``` to start the shadow-clj server.
+Run ```lein watch``` to start the shadow-cljs server.
 
-Run ```lein release``` to build release version
+Run ```lein release``` to build a release version.
 
 ![https://clojurescript.org/index](https://clojurescript.org/images/cljs-logo-60b.png)

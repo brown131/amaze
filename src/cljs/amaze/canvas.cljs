@@ -15,10 +15,12 @@
         canvas-height (+ (* height (+ thickness breadth)) thickness)]
     [canvas-width canvas-height]))
 
-(defn reset-canvas [] (reset! monet-canvas (canvas/init (.getElementById js/document "canvas") "2d")))
+(defn reset-canvas [] 
+  (reset! monet-canvas (canvas/init (.getElementById js/document "canvas") "2d"))
+  (canvas/stop-updating @monet-canvas))
 
 (defn clear-canvas [] (canvas/clear! @monet-canvas))
-  
+ 
 (defn print-maze []
   (let [image-url (.toDataURL (:canvas @monet-canvas) "image/jpeg")
         win (.open js/window image-url)]
