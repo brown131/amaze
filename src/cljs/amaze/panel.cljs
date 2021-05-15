@@ -23,16 +23,15 @@
         py (+ (* y breadth) (* thickness (+ y 1 (Math/min dy 0))))
         cw (+ breadth (* thickness (Math/abs dx)))
         ch (+ breadth (* thickness (Math/abs dy)))]
-    (draw-rect px py cw ch :white)))
+    (draw-rect px py cw ch ::white)))
 
 (defn render-exit []
-  (let [x (get-db-value :width)
-        y (rand-int (get-db-value :height))
+  (let [[x y] @(:exit db)
         thickness (get-db-value :thickness)
         breadth (get-db-value :breadth)
-        px (* x (+ breadth thickness))
+        px (* (inc x) (+ breadth thickness))
         py (+ (* y (+ breadth thickness)) thickness)]
-    (draw-rect px py thickness breadth :white)))
+    (draw-rect px py thickness breadth ::white)))
 
 (defn render-maze []
   (clear-canvas)
