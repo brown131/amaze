@@ -22,18 +22,23 @@
     (and (< -1 to-x (get-db-value :width))
          (< -1 to-y (get-db-value :height)))))
 
+(defn valid-move? "Check if a neighboring cell is not seperated by a wall."
+  [cell dir]
+  (and (in-range? cell dir) 
+       (or (= dir (get @maze-cells cell))
+           (= dir (opposite-direction (get @maze-cells (neighbor-cell cell dir)))))))
+
 (defn generate-dfs-maze "Generate a maze using the Depth-First Search algorithm."
   [[from-cell & rest-from-cells :as from-cells] threshold]
-  (let [to-direction (first (filter #(and (in-range? from-cell %)
-                                          (not (get @maze-cells (neighbor-cell from-cell %))))
+  (let [to-direction (first (filter #(and (in-range? from-cell %) (not (get @maze-cells (neighbor-cell from-cell %))))
                                     (shuffle [:north :south :east :west])))]
     (if-let [to-cell (neighbor-cell from-cell to-direction)]
       (do
         (swap! maze-cells assoc to-cell (opposite-direction to-direction))
         (when (< (/ (count @maze-cells) (get-db-value :size)) threshold)
           (recur (cons to-cell from-cells) threshold)))
-    (when-not (empty? rest-from-cells)
-      (recur rest-from-cells threshold)))))
+      (when-not (empty? rest-from-cells)
+        (recur rest-from-cells threshold)))))
 
 (defn generate-aldous-broder-maze "Generate a maze using the Aldous-Broder algorithm."
   [from-cell threshold]
@@ -86,13 +91,12 @@
                                            [width height]))))
 
 (defmulti generate-maze (fn [] @(:algorithm db)) :default 4)
+
 (defmethod generate-maze 1 [] (generate-dfs-maze [[-1 (second @(:ball-position db))]] 1))
 (defmethod generate-maze 2 [] (generate-aldous-broder-maze [-1 (second @(:ball-position db))] 1))
 (defmethod generate-maze 3 [] (generate-wilson-maze  @(:ball-position db) 1))
-(defmethod generate-maze 4 [] (do
-                                (generate-aldous-broder-maze [-1 (second @(:ball-position db))] 0.30)
-                                (generate-wilson-maze [(dec (get-db-value :width)) (rand-int (get-db-value :height))] 0.70)))
-(defmethod generate-maze 5 [] (do
-                                (generate-aldous-broder-maze [-1 (second @(:ball-position db))] 0.10)
-                                (generate-dfs-maze [[(rand-int (get-db-value :width)) (rand-int (get-db-value :height))]] 0.80)
-                                (generate-wilson-maze [(dec (get-db-value :width)) (rand-int (get-db-value :height))] 1)))
+(defmethod generate-maze 4 [] (do (generate-aldous-broder-maze [-1 (second @(:ball-position db))] 0.30)
+                                  (generate-wilson-maze [(dec (get-db-value :width)) (rand-int (get-db-value :height))] 0.70)))
+(defmethod generate-maze 5 [] (do (generate-aldous-broder-maze [-1 (second @(:ball-position db))] 0.10)
+                                  (generate-dfs-maze [[(rand-int (get-db-value :width)) (rand-int (get-db-value :height))]] 0.80)
+                                  (generate-wilson-maze [(dec (get-db-value :width)) (rand-int (get-db-value :height))] 1)))

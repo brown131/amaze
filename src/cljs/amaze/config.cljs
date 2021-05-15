@@ -3,7 +3,7 @@
 (def debug? ^boolean goog.DEBUG)
 
 (def directions "Maze directions with coordinate deltas.  Origin is upper left."
-  {:north [0 -1] :south [0 1] :east [1 0] :west [-1 0] :none [0 0]})
+  {:north [0 -1] :south [0 1] :east [1 0] :west [-1 0]})
 
 (def maze-algorithms "Maze generation algorithms"
   [{:id 1 :label "Depth-First Search"}
