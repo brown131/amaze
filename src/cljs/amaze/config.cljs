@@ -6,9 +6,9 @@
   {:north [0 -1] :south [0 1] :east [1 0] :west [-1 0]})
 
 (def maze-algorithms "Maze generation algorithms"
-  [{:id 1 :label "Depth-First Search"}
-   {:id 2 :label "Aldous-Broder"}
-   {:id 3 :label "Wilson"}
+  [{:id 1 :label "Aldous-Broder"}
+   {:id 2 :label "Wilson"}
+   {:id 3 :label "Depth-First Search"}
    {:id 4 :label "Aldous-Broder/Wilson Hybrid"}
    {:id 5 :label "AB/DFS/W Hybrid"}])
 
@@ -17,7 +17,7 @@
    :height (reagent/atom "20")
    :thickness (reagent/atom "10")
    :breadth (reagent/atom "15")
-   :algorithm (reagent/atom 4)
+   :algorithm (reagent/atom 1)
    :entrance (reagent/atom [0 0])
    :exit (reagent/atom [19 19])
    :size (reagent/atom 400)

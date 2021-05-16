@@ -91,11 +91,11 @@
                                                height (range (get-db-value :height))]
                                            [width height]))))
 
-(defmulti generate-maze (fn [] @(:algorithm db)) :default 4)
+(defmulti generate-maze (fn [] @(:algorithm db)) :default 1)
 
-(defmethod generate-maze 1 [] (generate-dfs-maze [(neighbor-cell @(:entrance db) :west)] 1))
-(defmethod generate-maze 2 [] (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 1))
-(defmethod generate-maze 3 [] (generate-wilson-maze @(:entrance db) 1))
+(defmethod generate-maze 1 [] (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 1))
+(defmethod generate-maze 2 [] (generate-wilson-maze @(:entrance db) 1))
+(defmethod generate-maze 3 [] (generate-dfs-maze [(neighbor-cell @(:entrance db) :west)] 1))
 (defmethod generate-maze 4 [] (do (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 0.30)
                                   (generate-wilson-maze @(:exit db) 0.70)))
 (defmethod generate-maze 5 [] (do (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 0.10)
