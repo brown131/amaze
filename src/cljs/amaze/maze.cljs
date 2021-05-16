@@ -71,15 +71,14 @@
             (recur new-start-cell new-start-cell {})))))))
 
 (defn generate-wilson-maze "Generate a maze using the Wilson algorithm."
-  [stop-cell threshold]
-  (let [start-cell (rand-nth (into [] @unvisited-maze-cells))]
-    (when (empty? @maze-cells)
-      (let [to-direction (first (filter #(in-range? stop-cell %) (shuffle [:north :south :east :west])))]
-        (swap! maze-cells assoc stop-cell to-direction)
-        (swap! unvisited-maze-cells disj stop-cell)))
-    (visit-maze-cells start-cell start-cell {})
-    (when (zero? (first stop-cell))
-      (swap! maze-cells assoc stop-cell :west))))
+  [start-cell stop-cell threshold]
+  (when (empty? @maze-cells)
+    (let [to-direction (first (filter #(in-range? stop-cell %) (shuffle [:north :south :east :west])))]
+      (swap! maze-cells assoc stop-cell to-direction)
+      (swap! unvisited-maze-cells disj stop-cell)))
+  (visit-maze-cells start-cell start-cell {})
+  (when (zero? (first stop-cell))
+    (swap! maze-cells assoc stop-cell :west)))
 
 (defn init-maze []
   (reset! (:entrance db) [0 (rand-int (get-db-value :height))])
@@ -94,10 +93,10 @@
 (defmulti generate-maze (fn [] @(:algorithm db)) :default 1)
 
 (defmethod generate-maze 1 [] (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 1))
-(defmethod generate-maze 2 [] (generate-wilson-maze @(:entrance db) 1))
+(defmethod generate-maze 2 [] (generate-wilson-maze (rand-nth (into [] @unvisited-maze-cells)) @(:entrance db) 1))
 (defmethod generate-maze 3 [] (generate-dfs-maze [(neighbor-cell @(:entrance db) :west)] 1))
-(defmethod generate-maze 4 [] (do (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 0.30)
-                                  (generate-wilson-maze @(:exit db) 0.70)))
-(defmethod generate-maze 5 [] (do (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 0.10)
-                                  (generate-dfs-maze [[(rand-int (get-db-value :width)) (rand-int (get-db-value :height))]] 0.80)
-                                  (generate-wilson-maze @(:exit db) 1)))
+(defmethod generate-maze 4 [] (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 0.30)
+                              (generate-wilson-maze (rand-nth (into [] (keys @maze-cells))) @(:exit db) 0.70))
+(defmethod generate-maze 5 [] (generate-aldous-broder-maze (neighbor-cell @(:entrance db) :west) 0.10)
+                              (generate-dfs-maze [[(rand-int (get-db-value :width)) (rand-int (get-db-value :height))]] 0.80)
+                              (generate-wilson-maze (rand-nth (into [] (keys @maze-cells))) @(:exit db) 1))

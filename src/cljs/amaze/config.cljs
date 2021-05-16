@@ -13,14 +13,14 @@
    {:id 5 :label "AB/DFS/W Hybrid"}])
 
 (def db "State of the maze UI controls."
-  {:width (reagent/atom "20")
-   :height (reagent/atom "20")
-   :thickness (reagent/atom "10")
-   :breadth (reagent/atom "15")
-   :algorithm (reagent/atom 1)
-   :entrance (reagent/atom [0 0])
-   :exit (reagent/atom [19 19])
-   :size (reagent/atom 400)
+  {:width         (reagent/atom "20")
+   :height        (reagent/atom "20")
+   :thickness     (reagent/atom "10")
+   :breadth       (reagent/atom "15")
+   :algorithm     (reagent/atom 1)
+   :entrance      (reagent/atom [0 0])
+   :exit          (reagent/atom [19 19])
+   :size          (reagent/atom 400)
    :ball-position (reagent/atom [0 0])})
 
 (defn get-db-value [kw] (js/parseInt @(kw db)))
