@@ -8,6 +8,7 @@
 profiles.clj
 .AppleDouble
 .DS_Store
+/.idea
 
 # Leiningen
 /.lein-*

@@ -1,12 +1,12 @@
 (defproject amaze "1.0.1"
-  :dependencies [[org.clojure/clojure "1.10.3"]
-                 [org.clojure/clojurescript "1.10.773"
+  :dependencies [[org.clojure/clojure "1.11.1"]
+                 [org.clojure/clojurescript "1.11.4"
                   :exclusions [com.google.javascript/closure-compiler-unshaded
                                org.clojure/google-closure-library
                                org.clojure/google-closure-library-third-party]]
-                 [thheller/shadow-cljs "2.11.21"]
-                 [org.clojure/core.logic "1.0.0"]
-                 [reagent "1.0.0"]
+                 [thheller/shadow-cljs "2.18.0"]
+                 [org.clojure/core.logic "1.0.1"]
+                 [reagent "1.1.1"]
                  [re-frame "1.2.0"]
                  [re-com "2.13.2"]
                  [re-pressed "0.3.1"]
@@ -66,7 +66,7 @@
 
   :profiles
   {:dev
-   {:dependencies [[binaryage/devtools "1.0.2"]]
+   {:dependencies [[binaryage/devtools "1.0.6"]]
     :source-paths ["dev"]}
 
    :prod {}
